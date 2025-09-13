@@ -3,188 +3,255 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>인재 스카우트 게임</title>
-    <!-- Tailwind CSS CDN -->
+    <title>스카우트 배틀</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
         body {
-            font-family: 'Inter', sans-serif;
-            @apply bg-gray-100;
+            font-family: 'Jua', sans-serif;
+            background: radial-gradient(circle at center, #fff7e6 0%, #ffddd2 50%, #fbd38d 100%);
+            background-attachment: fixed;
+            color: #4a4a4a;
         }
         .container {
-            @apply max-w-4xl mx-auto p-4 sm:p-8;
+            @apply min-h-screen flex items-center justify-center p-4 sm:p-8;
+        }
+        .game-wrapper {
+            @apply w-full max-w-4xl p-6 rounded-3xl shadow-2xl;
+            background-color: #fff;
+            border: 8px solid #fbd38d; /* 황금색 테두리 */
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative; /* 소녀 이미지 위치를 위한 설정 */
+        }
+        .chinese-girl {
+            position: absolute;
+            top: 20px;
+            width: 80px;
+            height: 80px;
+        }
+        .chinese-girl.left {
+            left: -40px;
+        }
+        .chinese-girl.right {
+            right: -40px;
         }
         .card {
-            @apply bg-white p-6 rounded-2xl shadow-xl;
+            background-color: #fff;
+            @apply p-8 rounded-3xl shadow-lg border-2 border-red-200;
+        }
+        .card-container {
+            @apply flex flex-wrap justify-center gap-4 mt-6;
+        }
+        .game-card {
+            @apply w-24 h-36 sm:w-28 sm:h-40 bg-red-50 rounded-2xl flex items-center justify-center font-bold text-2xl sm:text-3xl text-red-700 transform transition-all duration-300;
+            box-shadow: inset 0 0 0 4px #fbd38d, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .card-back {
+            background-color: #8B0000; /* 진한 붉은색 */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="50" dominant-baseline="middle" text-anchor="middle" font-size="60" fill="%23fbd38d">龍</text></svg>');
+            background-size: 80%;
+            background-repeat: no-repeat;
+            background-position: center;
+            @apply w-24 h-36 sm:w-28 sm:h-40 rounded-2xl flex items-center justify-center font-bold text-3xl text-gray-500;
         }
         .log-container {
-            @apply h-80 sm:h-96 overflow-y-auto mt-6 p-4 rounded-xl bg-gray-50 border border-gray-200 text-sm;
+            @apply h-40 sm:h-48 overflow-y-auto mt-6 p-4 rounded-xl bg-gray-100 border border-gray-200 text-sm;
+        }
+        .button-group {
+            @apply flex justify-center gap-4 mt-6;
+        }
+        .control-button {
+            @apply bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full shadow-md transition-all duration-300 transform hover:scale-105;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2), 0 0 10px #fbd38d;
+        }
+        .score-box {
+            background-color: #fff;
+            @apply rounded-2xl p-4 text-center shadow-md border-2 border-red-100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 0 8px #fbd38d;
+        }
+        .screen-curtain {
+            @apply absolute inset-0 bg-white bg-opacity-95 flex items-center justify-center flex-col p-4 z-50;
+        }
+        .modal {
+            @apply fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50;
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="container text-gray-800">
-        <div class="card">
-            <h1 class="text-3xl sm:text-4xl font-bold text-center mb-4">🏆 인재 스카우트 게임 시뮬레이션</h1>
-            <p class="text-center text-gray-600 mb-6">100명의 선수를 영입하기 위한 4명의 스카우터들의 경쟁을 시뮬레이션합니다.</p>
-            
-            <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
-                <button id="startButton" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
-                    시뮬레이션 시작
-                </button>
-            </div>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="relative w-full h-full game-wrapper">
+        <!-- 중국 소녀 일러스트 -->
+        <svg class="chinese-girl left" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#f472b6" d="M50 0 C75 0, 85 20, 80 40 L60 60 L40 60 L20 40 C15 20, 25 0, 50 0 Z"/>
+            <circle cx="50" cy="50" r="30" fill="#fbd38d" stroke="#ea580c" stroke-width="2"/>
+            <path fill="#fff" d="M30 50 C40 40, 60 40, 70 50 L65 70 C60 80, 40 80, 35 70 Z"/>
+            <path fill="#8B0000" d="M40 50 C45 55, 55 55, 60 50 L55 65 C50 70, 50 70, 45 65 Z"/>
+        </svg>
+        <svg class="chinese-girl right" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#f472b6" d="M50 0 C75 0, 85 20, 80 40 L60 60 L40 60 L20 40 C15 20, 25 0, 50 0 Z"/>
+            <circle cx="50" cy="50" r="30" fill="#fbd38d" stroke="#ea580c" stroke-width="2"/>
+            <path fill="#fff" d="M30 50 C40 40, 60 40, 70 50 L65 70 C60 80, 40 80, 35 70 Z"/>
+            <path fill="#8B0000" d="M40 50 C45 55, 55 55, 60 50 L55 65 C50 70, 50 70, 45 65 Z"/>
+        </svg>
 
-            <div class="log-container" id="gameLog">
-                <!-- Log messages will be displayed here -->
-            </div>
-            
-            <div id="finalResult" class="mt-6">
-                <!-- Final results will be displayed here -->
+        <!-- 게임 UI -->
+        <div class="container text-gray-800">
+            <div class="card">
+                <h1 class="text-3xl sm:text-4xl font-bold text-center mb-2 text-red-600">
+                    ✨ 스카우트 배틀 ✨
+                </h1>
+                <p class="text-center text-gray-500 mb-6">친구와 함께 최고의 선수를 영입하세요!</p>
+                
+                <div class="flex flex-col items-center gap-6">
+                    <!-- 상대 플레이어 정보 (항상 표시) -->
+                    <div class="score-box w-full">
+                        <h2 class="text-xl font-bold text-gray-500" id="opponentNameDisplay">상대 플레이어</h2>
+                        <div id="opponentCardContainer" class="flex justify-center mt-2">
+                            <div class="card-back"></div>
+                        </div>
+                        <div class="text-xl font-bold mt-2">소지금: <span id="opponentMoney">0</span>원</div>
+                    </div>
+                    
+                    <!-- 게임 정보 및 로그 -->
+                    <div class="score-box w-full">
+                        <p id="gameStatus" class="font-bold text-center text-lg mb-2 text-green-600">게임 시작!</p>
+                        <p class="text-center text-sm text-gray-400">
+                            총 라운드: <span id="roundCount">0</span>
+                            <br>
+                            이번 라운드 베팅: <span id="roundBet">0</span>원
+                        </p>
+                    </div>
+
+                    <!-- 현재 플레이어 정보 -->
+                    <div class="score-box w-full">
+                        <h2 class="text-xl font-bold text-red-600" id="playerNameDisplay">당신</h2>
+                        <div id="playerHand" class="card-container">
+                            <!-- 플레이어 카드들이 여기에 표시됩니다 -->
+                        </div>
+                        <div class="text-xl font-bold mt-2">소지금: <span id="playerMoney">0</span>원</div>
+                    </div>
+
+                    <!-- 베팅 UI -->
+                    <div id="bettingUI" class="flex flex-col items-center gap-4 mt-6 hidden">
+                        <input type="number" id="betInput" min="10000" step="10000" placeholder="베팅 금액" class="w-48 text-center rounded-full border-2 border-red-200 p-2 text-sm text-gray-800" />
+                        <div class="button-group">
+                            <button id="betButton" class="control-button">베팅</button>
+                            <button id="passButton" class="control-button bg-gray-400 hover:bg-gray-500">패스</button>
+                        </div>
+                    </div>
+
+                    <!-- 버튼 -->
+                    <div id="buttonGroup" class="button-group">
+                        <button id="restartButton" class="control-button">게임 시작</button>
+                    </div>
+                </div>
+                
+                <div class="log-container" id="gameLog">
+                    <!-- 게임 로그가 여기에 표시됩니다 -->
+                </div>
             </div>
         </div>
+
+        <!-- 턴 전환 화면 -->
+        <div id="turnCurtain" class="screen-curtain hidden">
+            <h2 id="turnMessage" class="text-3xl sm:text-4xl font-bold text-red-700 mb-6 text-center"></h2>
+            <button id="nextPlayerButton" class="control-button text-2xl px-8 py-4">
+                시작
+            </button>
+        </div>
+
+        <!-- 게임 튜토리얼 모달 -->
+        <div id="tutorialModal" class="modal">
+            <div class="card p-8 text-center max-w-lg">
+                <h3 class="text-2xl font-bold text-red-600 mb-4">게임 튜토리얼</h3>
+                <p class="mb-4 text-left">
+                    친구와 한 기기로 즐기는 1대1 베팅 게임이에요. 
+                </p>
+                <p class="mb-2 font-bold text-left">🌟 규칙</p>
+                <ul class="text-sm text-left list-disc list-inside">
+                    <li>각 플레이어는 100만 원으로 시작해요.</li>
+                    <li>라운드마다 1~100 사이의 카드 2장을 받아요.</li>
+                    <li>두 카드의 합산 점수 **(합산 % 10)**로 승패를 가려요. (예: 12 + 25 = 37 → 점수는 7)</li>
+                    <li>자신의 카드를 보고 베팅할지, 아니면 패스할지 선택해요.</li>
+                    <li>이길 경우, 상대방의 베팅 금액을 얻어요. 패배하면 베팅 금액을 잃어요.</li>
+                    <li>소지금이 0원이 되면 게임에서 패배해요!</li>
+                </ul>
+                <button id="closeTutorialButton" class="control-button mt-6">게임 시작하기</button>
+            </div>
+        </div>
+        
+        <!-- 메시지 모달 -->
+        <div id="messageModal" class="modal hidden">
+            <div class="card p-8 text-center max-w-sm">
+                <h3 class="text-xl font-bold text-red-600 mb-4" id="messageTitle">알림</h3>
+                <p class="mb-6 text-base" id="messageContent"></p>
+                <button id="closeMessageButton" class="control-button">확인</button>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Firebase SDKs are required for the immersive environment -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // 게임 상태 변수
+        const players = ["플레이어 1", "플레이어 2"];
+        let playerMoney = {};
+        let playerHands = {};
+        let playerBets = {};
+        let roundCount = 0;
+        let currentTurn = 0;
+        let isGameActive = false;
 
-        // Global variables provided by the environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // DOM 요소
+        const playerHandDiv = document.getElementById('playerHand');
+        const opponentCardContainer = document.getElementById('opponentCardContainer');
+        const gameStatus = document.getElementById('gameStatus');
+        const playerMoneySpan = document.getElementById('playerMoney');
+        const opponentMoneySpan = document.getElementById('opponentMoney');
+        const roundCountSpan = document.getElementById('roundCount');
+        const roundBetSpan = document.getElementById('roundBet');
+        const gameLogDiv = document.getElementById('gameLog');
+        const restartButton = document.getElementById('restartButton');
+        const turnCurtain = document.getElementById('turnCurtain');
+        const turnMessage = document.getElementById('turnMessage');
+        const nextPlayerButton = document.getElementById('nextPlayerButton');
+        const playerNameDisplay = document.getElementById('playerNameDisplay');
+        const opponentNameDisplay = document.getElementById('opponentNameDisplay');
+        const bettingUI = document.getElementById('bettingUI');
+        const betInput = document.getElementById('betInput');
+        const betButton = document.getElementById('betButton');
+        const passButton = document.getElementById('passButton');
+        const tutorialModal = document.getElementById('tutorialModal');
+        const closeTutorialButton = document.getElementById('closeTutorialButton');
+        const messageModal = document.getElementById('messageModal');
+        const messageContent = document.getElementById('messageContent');
+        const closeMessageButton = document.getElementById('closeMessageButton');
 
-        let app, db, auth;
-
-        // Initialize Firebase
-        const initFirebase = async () => {
-            try {
-                if (Object.keys(firebaseConfig).length > 0) {
-                    app = initializeApp(firebaseConfig);
-                    db = getFirestore(app);
-                    auth = getAuth(app);
-                    if (initialAuthToken) {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                }
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-            }
-        };
-
-        initFirebase();
-
-        // Game Logic
-        document.getElementById('startButton').addEventListener('click', () => {
-            document.getElementById('gameLog').innerHTML = '';
-            document.getElementById('finalResult').innerHTML = '';
-            simulateScoutingGame();
-        });
-
-        const logMessage = (message, isBold = false) => {
-            const logElement = document.getElementById('gameLog');
+        // 게임 로그 출력 함수
+        const logMessage = (message) => {
             const p = document.createElement('p');
-            if (isBold) {
-                p.classList.add('font-bold');
-            }
-            p.innerHTML = message;
-            logElement.appendChild(p);
-            logElement.scrollTop = logElement.scrollHeight;
+            p.textContent = message;
+            gameLogDiv.appendChild(p);
+            gameLogDiv.scrollTop = gameLogDiv.scrollHeight;
         };
 
-        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+        // 메시지 모달 표시 함수 (alert() 대체)
+        const showMessage = (message) => {
+            messageContent.textContent = message;
+            messageModal.classList.remove('hidden');
+        };
 
-        async function simulateScoutingGame() {
-            logMessage("--- ✍️ 인재 스카우트 게임 시작! ---", true);
-            logMessage("총 100명의 선수를 4명의 스카우터에게 25명씩 분배합니다.\n");
-
-            // 1부터 100까지의 선수 가치 덱 생성
-            const scoutCards = Array.from({ length: 100 }, (_, i) => i + 1);
-            scoutCards.sort(() => Math.random() - 0.5);
-
-            // 4명의 스카우터에게 카드 분배
-            const scouts = {
-                '스카우터 A': scoutCards.slice(0, 25),
-                '스카우터 B': scoutCards.slice(25, 50),
-                '스카우터 C': scoutCards.slice(50, 75),
-                '스카우터 D': scoutCards.slice(75, 100)
-            };
-
-            // 각 스카우터가 영입한 선수들을 저장할 리스트
-            const acquiredTalents = {};
-            for (const name in scouts) {
-                acquiredTalents[name] = [];
-            }
+        // 게임 초기화
+        const initializeGame = () => {
+            playerMoney = {};
+            playerMoney[players[0]] = 1000000;
+            playerMoney[players[1]] = 1000000;
             
-            let pot = [];
-            let roundNum = 1;
-
-            while (Object.values(scouts).some(hand => hand.length > 0)) {
-                await sleep(500); // Add a small delay for better visualization
-                
-                const bids = {};
-                for (const scout in scouts) {
-                    if (scouts[scout].length > 0) {
-                        const talentToScout = scouts[scout].splice(Math.floor(Math.random() * scouts[scout].length), 1)[0];
-                        bids[scout] = talentToScout;
-                    }
-                }
-                
-                logMessage(`--- 라운드 ${roundNum} ---`, true);
-                for (const scout in bids) {
-                    logMessage(`- ${scout}가 제시한 선수 가치: ${bids[scout]}`);
-                }
-
-                if (Object.keys(bids).length > 0) {
-                    const highestValue = Math.max(...Object.values(bids));
-                    const topScouts = Object.keys(bids).filter(scout => bids[scout] === highestValue);
-                    
-                    const talentsOnTable = [...Object.values(bids), ...pot];
-                    
-                    if (topScouts.length === 1) {
-                        const winner = topScouts[0];
-                        acquiredTalents[winner].push(...talentsOnTable);
-                        pot = [];
-                        logMessage(`✨ ${winner}가 최고 가치 ${highestValue}로 영입에 성공했습니다! 영입 선수: ${talentsOnTable.length}명`, true);
-                    } else {
-                        pot.push(...talentsOnTable);
-                        logMessage(`⚠️ 최고 가치 ${highestValue}로 ${topScouts.length}명이 동점입니다! 이번 라운드 선수(${talentsOnTable.length}명)는 다음 라운드로 이월됩니다.`, true);
-                    }
-                } else {
-                    break;
-                }
-                
-                logMessage("--------------------");
-                roundNum++;
-            }
-
-            logMessage("\n--- 🏁 최종 결과 ---", true);
-            const finalResultDiv = document.getElementById('finalResult');
-            const finalRoster = {};
-            let finalWinner = '';
-            let maxCount = -1;
-
-            for (const scout in acquiredTalents) {
-                const count = acquiredTalents[scout].length;
-                finalRoster[scout] = count;
-                if (count > maxCount) {
-                    maxCount = count;
-                    finalWinner = scout;
-                }
-                const p = document.createElement('p');
-                p.textContent = `- ${scout}가 영입한 선수 수: ${count}명`;
-                finalResultDiv.appendChild(p);
-            }
+            playerHands = {};
+            playerBets = {};
+            roundCount = 0;
+            currentTurn = 0;
+            isGameActive = true;
             
-            const winnerP = document.createElement('p');
-            winnerP.classList.add('font-bold', 'text-lg', 'mt-4', 'text-center', 'text-blue-600');
-            winnerP.textContent = `🏆 최종 승리자는 ${finalWinner}입니다!`;
-            finalResultDiv.appendChild(winnerP);
-        }
-    </script>
-</body>
-</html>
+            gameLogDiv.innerHTML = '';
+            updateScores();
+            
+            restartButton.
