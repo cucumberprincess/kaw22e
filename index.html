@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인재 스카우트 게임</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            @apply bg-gray-100;
+        }
+        .container {
+            @apply max-w-4xl mx-auto p-4 sm:p-8;
+        }
+        .card {
+            @apply bg-white p-6 rounded-2xl shadow-xl;
+        }
+        .log-container {
+            @apply h-80 sm:h-96 overflow-y-auto mt-6 p-4 rounded-xl bg-gray-50 border border-gray-200 text-sm;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="container text-gray-800">
+        <div class="card">
+            <h1 class="text-3xl sm:text-4xl font-bold text-center mb-4">🏆 인재 스카우트 게임 시뮬레이션</h1>
+            <p class="text-center text-gray-600 mb-6">100명의 선수를 영입하기 위한 4명의 스카우터들의 경쟁을 시뮬레이션합니다.</p>
+            
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
+                <button id="startButton" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
+                    시뮬레이션 시작
+                </button>
+            </div>
+
+            <div class="log-container" id="gameLog">
+                <!-- Log messages will be displayed here -->
+            </div>
+            
+            <div id="finalResult" class="mt-6">
+                <!-- Final results will be displayed here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs are required for the immersive environment -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app, db, auth;
+
+        // Initialize Firebase
+        const initFirebase = async () => {
+            try {
+                if (Object.keys(firebaseConfig).length > 0) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                }
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+            }
+        };
+
+        initFirebase();
+
+        // Game Logic
+        document.getElementById('startButton').addEventListener('click', () => {
+            document.getElementById('gameLog').innerHTML = '';
+            document.getElementById('finalResult').innerHTML = '';
+            simulateScoutingGame();
+        });
+
+        const logMessage = (message, isBold = false) => {
+            const logElement = document.getElementById('gameLog');
+            const p = document.createElement('p');
+            if (isBold) {
+                p.classList.add('font-bold');
+            }
+            p.innerHTML = message;
+            logElement.appendChild(p);
+            logElement.scrollTop = logElement.scrollHeight;
+        };
+
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        async function simulateScoutingGame() {
+            logMessage("--- ✍️ 인재 스카우트 게임 시작! ---", true);
+            logMessage("총 100명의 선수를 4명의 스카우터에게 25명씩 분배합니다.\n");
+
+            // 1부터 100까지의 선수 가치 덱 생성
+            const scoutCards = Array.from({ length: 100 }, (_, i) => i + 1);
+            scoutCards.sort(() => Math.random() - 0.5);
+
+            // 4명의 스카우터에게 카드 분배
+            const scouts = {
+                '스카우터 A': scoutCards.slice(0, 25),
+                '스카우터 B': scoutCards.slice(25, 50),
+                '스카우터 C': scoutCards.slice(50, 75),
+                '스카우터 D': scoutCards.slice(75, 100)
+            };
+
+            // 각 스카우터가 영입한 선수들을 저장할 리스트
+            const acquiredTalents = {};
+            for (const name in scouts) {
+                acquiredTalents[name] = [];
+            }
+            
+            let pot = [];
+            let roundNum = 1;
+
+            while (Object.values(scouts).some(hand => hand.length > 0)) {
+                await sleep(500); // Add a small delay for better visualization
+                
+                const bids = {};
+                for (const scout in scouts) {
+                    if (scouts[scout].length > 0) {
+                        const talentToScout = scouts[scout].splice(Math.floor(Math.random() * scouts[scout].length), 1)[0];
+                        bids[scout] = talentToScout;
+                    }
+                }
+                
+                logMessage(`--- 라운드 ${roundNum} ---`, true);
+                for (const scout in bids) {
+                    logMessage(`- ${scout}가 제시한 선수 가치: ${bids[scout]}`);
+                }
+
+                if (Object.keys(bids).length > 0) {
+                    const highestValue = Math.max(...Object.values(bids));
+                    const topScouts = Object.keys(bids).filter(scout => bids[scout] === highestValue);
+                    
+                    const talentsOnTable = [...Object.values(bids), ...pot];
+                    
+                    if (topScouts.length === 1) {
+                        const winner = topScouts[0];
+                        acquiredTalents[winner].push(...talentsOnTable);
+                        pot = [];
+                        logMessage(`✨ ${winner}가 최고 가치 ${highestValue}로 영입에 성공했습니다! 영입 선수: ${talentsOnTable.length}명`, true);
+                    } else {
+                        pot.push(...talentsOnTable);
+                        logMessage(`⚠️ 최고 가치 ${highestValue}로 ${topScouts.length}명이 동점입니다! 이번 라운드 선수(${talentsOnTable.length}명)는 다음 라운드로 이월됩니다.`, true);
+                    }
+                } else {
+                    break;
+                }
+                
+                logMessage("--------------------");
+                roundNum++;
+            }
+
+            logMessage("\n--- 🏁 최종 결과 ---", true);
+            const finalResultDiv = document.getElementById('finalResult');
+            const finalRoster = {};
+            let finalWinner = '';
+            let maxCount = -1;
+
+            for (const scout in acquiredTalents) {
+                const count = acquiredTalents[scout].length;
+                finalRoster[scout] = count;
+                if (count > maxCount) {
+                    maxCount = count;
+                    finalWinner = scout;
+                }
+                const p = document.createElement('p');
+                p.textContent = `- ${scout}가 영입한 선수 수: ${count}명`;
+                finalResultDiv.appendChild(p);
+            }
+            
+            const winnerP = document.createElement('p');
+            winnerP.classList.add('font-bold', 'text-lg', 'mt-4', 'text-center', 'text-blue-600');
+            winnerP.textContent = `🏆 최종 승리자는 ${finalWinner}입니다!`;
+            finalResultDiv.appendChild(winnerP);
+        }
+    </script>
+</body>
+</html>
